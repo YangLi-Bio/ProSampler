@@ -218,7 +218,7 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
     cout << "-P: cutoff of adjusted p-value for motifs (default: 0.05)\n";
     cout << "-t: Cutoff of p-value to choose significant k-mers (default: 0.01)\n";
     cout << "-w: Cutoff of p-value to choose sub-significant k-mers (default:0.05)\n";
-    cout << "-z: Cutoff of p-value to extend preliniary motifs(default: 1.96)\n";
+    cout << "-z: Cutoff of z-scores to extend preliniary motifs (default: 1.96)\n";
     cout << "-s: Cutoff of SW score to construct graph (default: 1.80)\n";
     cout << "-C: Method to perform p-value correction (default: 1 - Bonferroni; 2 - Benjamini-Hochberg)\n";
     cout << "-R: Cutoff of data size to perform p-value correction (100000 by default)\n";
@@ -870,7 +870,8 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
     sum_exp = 0;
     sum_bg = 0;
     
-    if (correction_method == 1) { // Bonferoni correction 
+    if (correction_method == 1) { // Bonferoni correction
+      cout << "Bonferroni correction will be used ...\n";
       thr1 /= double(map_exp.size());
       thr3 /= double(map_exp.size());
       thr1 = normalCDF(thr1); // find the z-score cutoff to select significant k-mers
@@ -912,7 +913,7 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
       // exit(0);
       
       z_sc = ztest(tmp_cover1, tmp_cover2, sum_exp, sum_bg); // two proportion z-test
-      cout << z_sc << "\n";
+      // cout << z_sc << "\n";
 
       // Not BH correction
       if (correction_method != 2) {
@@ -2328,19 +2329,25 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
         //   // maybe I can logrithmize the p-value for acceleration
         // }
         double P = kmer_bg[kmer_final[all_pre[i].set[j]].kmer]; //k-mer frequency in background
+        // cout << kmer_bg.size() << "\n";
+        // exit(0);
+        // cout << "P: " << P << "\n";
         chi_val += pow((kmer_final[all_pre[i].set[j]].occurr / all_pre[i].occurr - P), 2) / P;
         // calculate the chi-square statistic
         other_kmer -= P;
         kmer_count += kmer_final[all_pre[i].set[j]].occurr; 
       }
+      // cout << chi_val << "\n";
       chi_val += pow(((all_pre[i].occurr - kmer_count) / all_pre[i].occurr - other_kmer), 2) / 
         other_kmer;
       
-      // cout << chi_val << " " << n << "\n";
+      // cout << chi_val << " " << "\n";
+      // exit(0);
       all_pre[i].pvalue = compute_chi_square(all_pre[i].set.size(), chi_val); // calculate the p-value based on
       // the chi square value
       
       // cout << chi_val << " " << all_pre[i].pvalue << "\n";
+      // exit(0);
     }
     
     // p-value adjustment
@@ -2348,7 +2355,7 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
     {
       all_pre[i].padj = all_pre[i].pvalue * all_pre.size();
       
-      // cout << "p-adj: " << all_pre[i].padj << "\n";
+      // cout << all_pre[i].pvalue << " " << all_pre[i].padj << "\n";
     }
   }
   
@@ -2861,6 +2868,9 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
     
     for(int i=0; i<all_mtf.size()-1; i++)
     {
+      // cout << all_mtf[i].padj << "\n";
+      
+      // cout << all_mtf[i].padj << "\n";
       if (all_mtf[i].padj > padj_cutoff)
       {
         flag[i] = 1;
@@ -2922,7 +2932,8 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
             <<" -b "<<bg_file.c_str()<<" -o "<<out_file.c_str()<<" -d "<<num_deg<<" -m "<<num_mtf
             <<" -f "<<num_iter<<" -k "<<kmer_length<<" -l "<<lmer_length<<" -r "
             <<redundant_thr<<" -p "<<str_flag<<" -t "<<thr1<< " -w " << thr3 << " -c "<<hd_thr<<" -z "
-            <<thr2<<" -h "<<help_flag<< " -P " << padj_cutoff << "\n";
+            <<thr2<<" -h "<<help_flag<< " -P " << padj_cutoff << " -C " << correction_method << " -R " 
+            << correction_cutoff << " -s " << sw_thr << "\n";
     f_out_op<<endl<<"# Begin: "<<begin_pkg<<endl;
     f_out_op<<"#   End: "<<end_pkg<<endl<<endl;
     f_out_op<<"MEME Version 4\n"<<endl;
@@ -2957,8 +2968,8 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
               <<all_mtf[i].rev_deg<<" ProSampler\n"<<endl;
       f_out_op<<"letter-probability matrix: alength= 4 w= "
               <<all_mtf[i].alength<<" nsites= "<<all_mtf[i].nsites << 
-      " score= " << all_mtf[i].score<< " pvalue= " << setprecision(PRECISE) << all_mtf[i].pvalue << 
-        " padj= " << setprecision(PRECISE) << all_mtf[i].padj << "\n";
+      " score= " << all_mtf[i].score<< " pvalue= " << scientific << all_mtf[i].pvalue << 
+        " padj= " << scientific << all_mtf[i].padj << "\n";
       
       for(int j=0; j<all_mtf[i].alength; j++)
       {
@@ -3005,7 +3016,8 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
             <<" -b "<<bg_file.c_str()<<" -o "<<out_file.c_str()<<" -d "<<num_deg<<" -m "<<num_mtf
             <<" -f "<<num_iter<<" -k "<<kmer_length<<" -l "<<lmer_length<<" -r "
             <<redundant_thr<<" -p "<<str_flag<<" -t "<<thr1<< " -w " << thr3 << " -c "<<hd_thr<<" -z "
-            <<thr2<<" -h "<<help_flag<< " -P " << padj_cutoff << "\n";
+            <<thr2<<" -h "<<help_flag<< " -P " << padj_cutoff << " -C " << correction_method << " -R " 
+            << correction_cutoff << " -s " << sw_thr << "\n";
     f_out_op<<endl<<"# Begin: "<<begin_pkg<<endl;
     f_out_op<<"#   End: "<<end_pkg<<endl<<endl;
     f_out_op<<"ProSampler Version 1.0.0\n"<<endl;
@@ -3032,8 +3044,8 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
       f_out_op<<"MOTIF "<<all_mtf[i].deg<<" "<<all_mtf[i].rev_deg<<" ProSampler\n"<<endl;
       f_out_op<<"letter-probability matrix: alength= 4 w= "
               <<all_mtf[i].alength<<" nsites= "<<all_mtf[i].nsites << 
-      " score= " << all_mtf[i].score<< " pvalue= " << all_mtf[i].pvalue << 
-        "padj= " << all_mtf[i].padj << "\n";
+      " score= " << all_mtf[i].score<< " pvalue= " << scientific << all_mtf[i].pvalue << 
+        " padj= " << scientific << all_mtf[i].padj << "\n";
       for(int j=0; j<all_mtf[i].site.size(); j++)
       {
         f_out_op<<all_mtf[i].site[j].header<<"\t"
@@ -3130,7 +3142,8 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
             <<" -b "<<bg_file.c_str()<<" -o "<<out_file.c_str()<<" -d "<<num_deg<<" -m "<<num_mtf
             <<" -f "<<num_iter<<" -k "<<kmer_length<<" -l "<<lmer_length<<" -r "
             <<redundant_thr<<" -p "<<str_flag<<" -t "<<thr1<< " -w " << thr3 << " -c "<<hd_thr<<" -z "
-            <<thr2<<" -h "<<help_flag<< " -P " << padj_cutoff << "\n";
+            <<thr2<<" -h "<<help_flag<< " -P " << padj_cutoff << " -C " << correction_method << " -R " 
+            << correction_cutoff << " -s " << sw_thr << "\n";
     f_out_op<<endl<<"# Begin: "<<begin_pkg<<endl;
     f_out_op<<"#   End: "<<end_pkg<<endl<<endl;
     f_out_op<<"ProSampler Version 1.0.0\n"<<endl;
@@ -3325,7 +3338,10 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
       nkmer += (it -> second).size(); // Add the occurrence of this k-mer
     }
     
+    // cout << kmer_site.size() << "\n";
     kmer_in_bg(kmer_bg, kmer_pkg, kmer_site, nkmer);
+    // cout << kmer_bg.size() << "\n";
+    // exit(0);
     cout << "Identified " << kmer_site.size() << " " << 
       kmer_length << "-mer in background sequences.\n";
     
@@ -3357,6 +3373,9 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
                 kmer_bg, bg_flag);
     }
     
+    // cout << kmer_bg.size() << "\n";
+    // exit(0);
+    
     // cout << "CAATGGCA " << kmer_site["CAATGGCA"].size() << "\n";
     // cout << "CAATGGCA " << kmer_bg["CAATGGCA"].size() << "\n";
     // exit(0);
@@ -3373,10 +3392,13 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
     choose_kmer(kmer_site, kmer_bg, major_set, correction_method, 
                 seq_final.name.size(), fa_flag, minor_set, thr1, thr3);
     // select the significant and sub-significant k-mers
+    // cout << kmer_bg.size() << "\n";
+    // exit(0);
     
     kmer_sort(major_set); // sort all significant k-mers
     
     if (correction_method == 2) {
+      cout << "Benjamini-Hochberg correction will be used ...\n";
       BH_correct(major_set, minor_set, thr1, thr3);
     }
     
@@ -3392,7 +3414,7 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
     kmer_site.clear();
     // kmer_bg.clear();
     map<string, int_vector>().swap(kmer_site);
-    map<string, float>().swap(kmer_bg);
+    // map<string, float>().swap(kmer_bg);
     // free_seq(bg_nondeg);
     // free_seq(bg_final);
     
@@ -3546,6 +3568,8 @@ const double pval_zscore[] = {5.99780701500769, 5.88419335480046, 5.816757740125
     for (map<string, float>::iterator it = kmer_bg.begin(); it != kmer_bg.end(); it ++) {
       (it -> second) /= nkmer;
     }
+    // cout << kmer_bg.size() << "\n";
+    // exit(0);
     compute_pvalue(all_pre, kmer_final, kmer_bg); // sift preliminary motifs using chi square p-values
     vector<kmer_all>().swap(kmer_final);
     

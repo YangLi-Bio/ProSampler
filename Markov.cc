@@ -336,17 +336,22 @@ void kmer_in_bg(map<string, float>& kmer_bg, struct kmer_package kmer_pkg,
   for (map<string, vector<int> >::iterator it = kmer_site.begin(); it != kmer_site.end(); it ++)
   {
     string str = it -> first; // get the string from positive sequences
-    kmer_bg[it -> first] = nkmer * kmer_pkg.AA[str.substr(0, 1)] * kmer_pkg.B[str.substr(0, 2)] * 
+    kmer_bg[str] = nkmer * kmer_pkg.AA[str.substr(0, 1)] * kmer_pkg.B[str.substr(0, 2)] * 
       kmer_pkg.C[str.substr(0, 3)]; // The first three nucleotides
     for (int i = 3; i < str.length(); i ++)
     {
       // cout << kmer_pkg.D[str.substr(i - 3, 4)] << "\n";
-      kmer_bg[it -> first] *= kmer_pkg.D[str.substr(i - 3, 4)];
+      kmer_bg[str] *= kmer_pkg.D[str.substr(i - 3, 4)];
     }
     // cout << kmer_bg[it -> first] << "\n";
     // exit(0);
     // kmer_bg[it -> first] *= nkmer;
+    // cout << str << " " << kmer_bg[str] << "\n";
+    // exit(0);
   }
+  
+  // cout << kmer_bg.size() << "\n";
+  // exit(0);
   
   cout << "Finish calculating the frequencies for " << nkmer << " " << (kmer_site.begin() -> first).length() << 
     "-mers.\n";
